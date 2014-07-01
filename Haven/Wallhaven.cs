@@ -9,6 +9,9 @@ using HtmlAgilityPack;
 
 namespace Haven
 {
+    /// <summary>
+    /// Class for qeueing and downloading wallpapers from wallhaven.
+    /// </summary>
     public class Wallhaven
     {
         private const string _pagePostfix = "&page={0}";
@@ -21,23 +24,70 @@ namespace Haven
         private Queue<Wallpaper> _qeue;
         private Stopwatch _stopwatch;
 
+        /// <summary>
+        /// Gets the number of pages qeued for download.
+        /// </summary>
         public int Pages { get; private set; }
+
+        /// <summary>
+        /// Gets the page offset.
+        /// </summary>
         public int PageOffset { get; private set; }
+
+        /// <summary>
+        /// Gets the number of errors during the download process.
+        /// </summary>
         public int Errors { get; private set; }
+
+        /// <summary>
+        /// Gets the request Url.
+        /// </summary>
         public string URL { get; private set; }
+
+        /// <summary>
+        /// Gets the path where the wallpapers are saved.
+        /// </summary>
         public string Savepath { get; private set; }
+
+        /// <summary>
+        /// Gets the time it took to download all the qeued wallpapers.
+        /// </summary>
         public double DownloadTime { get; private set; }
 
+        /// <summary>
+        /// Returns a boolean representing the download state.
+        /// </summary>
         public bool IsDownloading { get { return _downloading; } }
+
+        /// <summary>
+        /// Gets the number of wallpapers per page.
+        /// </summary>
         public int GetThumbsPerPage { get { return (int)Math.Round((double)(_wallpapers.Count / Pages)); } }
+
+        /// <summary>
+        /// Gets the number of downloaded wallpapers.
+        /// </summary>
         public int GetDownloadCount { get { return _wallpapers.Count - _qeue.Count; } }
+
+        /// <summary>
+        /// Returns the wallpaper count.
+        /// </summary>
         public int GetWallpaperCount { get { return _wallpapers.Count; } }
+
+        /// <summary>
+        /// Return all the wllpapers in an array.
+        /// </summary>
         public Wallpaper[] GetWallpapers { get { return _wallpapers.ToArray(); } }
 
+        /// <summary>
+        /// Initalize a Wallhaven class with the requested Url.
+        /// </summary>
+        /// <param name="url">Request Url</param>
         public Wallhaven(string url)
         {
             URL = url;
 
+            // Check to see if the site is still in alpha
             if (!url.Contains("alpha."))
                 Console.WriteLine("[[ Please beware this verison may be outdated ]]");
 
@@ -46,7 +96,13 @@ namespace Haven
             _downloading = false;
         }
 
-
+        /// <summary>
+        /// Downloads wallpapers using the request Url.
+        /// </summary>
+        /// <param name="savepath">Folder location to save to</param>
+        /// <param name="pages">Number of pages to download</param>
+        /// <param name="offset">Page offset</param>
+        /// <param name="downloadCompletedCallback">Callback function invoked when the download is complete</param>
         public void StartDownload(string savepath = "", int pages = 1, int offset = 0, Action downloadCompletedCallback = null)
         {
             Savepath = savepath;
@@ -62,9 +118,9 @@ namespace Haven
 
             if (pages > 1)
                 for (int i = 1; i <= pages; i++)
-                    QeueDownload(savepath, i + offset);
+                    QeueDownload(i + offset);
             else
-                QeueDownload(savepath, pages + offset);
+                QeueDownload(pages + offset);
 
             _qeue = new Queue<Wallpaper>();
             foreach (var wall in _wallpapers)
@@ -73,6 +129,11 @@ namespace Haven
             DownloadWallpapers();
         }
 
+        /// <summary>
+        /// Test to see if the qeue is empty, if it is the
+        /// callback is invoked and DownloadTime is set.
+        /// </summary>
+        /// <returns></returns>
         private bool ShouldStop()
         {
             if (!_qeue.Any()) {
@@ -89,6 +150,10 @@ namespace Haven
             return false;
         }
 
+        /// <summary>
+        /// Asynchronously downloads a new wallpaper in the qeue for each call.
+        /// If the qeue is empty the method aborts.
+        /// </summary>
         private async void DownloadWallpapers()
         {
             if (ShouldStop()) return;
@@ -118,6 +183,11 @@ namespace Haven
             }
         }
 
+        /// <summary>
+        /// Checks to see if a remote URL is valid/exists.
+        /// </summary>
+        /// <param name="url">Url to check</param>
+        /// <returns>A bool representing the existence of the Url</returns>
         private static bool UrlExist(string url)
         {
             try {
@@ -134,6 +204,11 @@ namespace Haven
             }
         }
 
+        /// <summary>
+        /// Initalizes a new download from the qeue after one was complete.
+        /// </summary>
+        /// <param name="sender"></param>
+        /// <param name="e"></param>
         private void DownloadFileCompleted(object sender, AsyncCompletedEventArgs e)
         {
             if (e.Error != null) throw e.Error;
@@ -142,7 +217,11 @@ namespace Haven
             DownloadWallpapers();
         }
 
-        private void QeueDownload(string savepath, int page)
+        /// <summary>
+        /// Qeues all the requested wallpapers for downloading.
+        /// </summary>
+        /// <param name="page">Page at the requested Url</param>
+        private void QeueDownload(int page)
         {
             var url = String.Format(URL + _pagePostfix, page);
 
@@ -170,20 +249,52 @@ namespace Haven
     public enum Extension { Jpg, Png }
     public enum Purity { SFW, Sketchy, NSFW }
 
+    /// <summary>
+    /// Holds the information of a wallpaper.
+    /// </summary>
     public class Wallpaper
     {
         private const string _downloadUrl = @"http://alpha.wallhaven.cc/wallpapers/full/wallhaven-{0}.{1}";
 
+        /// <summary>
+        /// Returns what kind of extension the wallpaper has.
+        /// </summary>
         public Extension Extension { get; set; }
+
+        /// <summary>
+        /// Gets the purity of the wallpaper.
+        /// </summary>
         public Purity Purity { get { throw new NotImplementedException(); } }
 
+        /// <summary>
+        /// Returns the Id of the wallpaper.
+        /// </summary>
         public int Id { get; private set; }
+
+        /// <summary>
+        /// Returns the wallpaper width.
+        /// </summary>
         public int Width { get { throw new NotImplementedException(); } }
+
+        /// <summary>
+        /// Returns the wallpaper heigth.
+        /// </summary>
         public int Heigth { get { throw new NotImplementedException(); } }
 
+        /// <summary>
+        /// Returns the download Url for the wallpaper.
+        /// </summary>
         public string Url { get { return String.Format(_downloadUrl, Id, Extension == Extension.Jpg ? "jpg" : "png"); } }
+
+        /// <summary>
+        /// Returns a default name.
+        /// </summary>
         public string Name { get { return String.Format("wallpaper-{0}", Id); } }
 
+        /// <summary>
+        /// Initialize a wallpaper
+        /// </summary>
+        /// <param name="id">Wallpaper Id</param>
         public Wallpaper(int id)
         {
             this.Id = id;
