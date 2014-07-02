@@ -14,8 +14,6 @@ namespace Haven
     /// </summary>
     public class Wallhaven
     {
-        private const string _pagePostfix = "&page={0}";
-
         private string _result;
         private bool _downloading;
 
@@ -230,7 +228,7 @@ namespace Haven
         /// <param name="page">Page at the requested Url</param>
         private void QeueDownload(int page)
         {
-            var url = String.Format(URL + _pagePostfix, page);
+            var url = String.Format(URL + "&page={0}", page);
 
             using (var client = new WebClient()) {
                 client.Proxy = null;
@@ -247,15 +245,17 @@ namespace Haven
                 var resNode = node.SelectSingleNode(String.Format("//*[@id=\"thumb-{0}\"]/div/span[1]", id));
                 var resolution = resNode.InnerHtml.Trim().Split('x');
 
-                int width = int.Parse(resolution[0].Trim());
-                int height = int.Parse(resolution[1].Trim());
+                int height = int.Parse(resolution[0].Trim());
+                int width = int.Parse(resolution[1].Trim());
 
                 var wallpaper = new Wallpaper(id, width, height);
 
                 if (!UrlExist(wallpaper.Url))
                     wallpaper.Extension = Extension.Png;
 
-                _wallpapers.Add(wallpaper);
+                if (wallpaper.Width >= MinimumWidth 
+                    && wallpaper.Height >= MinimumHeight)
+                    _wallpapers.Add(wallpaper);
             }
         }
     }
@@ -291,9 +291,9 @@ namespace Haven
         public int Width { get; private set; }
 
         /// <summary>
-        /// Returns the wallpaper heigth.
+        /// Returns the wallpaper height.
         /// </summary>
-        public int Heigth { get; private set; }
+        public int Height { get; private set; }
 
         /// <summary>
         /// Returns the download Url for the wallpaper.
@@ -325,7 +325,7 @@ namespace Haven
             : this(id)
         {
             this.Width = width;
-            this.Heigth = height;
+            this.Height = height;
         }
     }
 }
