@@ -16,7 +16,6 @@ namespace Haven
     {
         private const string _pagePostfix = "&page={0}";
 
-        private Action _callback;
         private string _result;
         private bool _downloading;
 
@@ -43,11 +42,6 @@ namespace Haven
         /// Gets the request Url.
         /// </summary>
         public string URL { get; private set; }
-
-        /// <summary>
-        /// Gets the path where the wallpapers are saved.
-        /// </summary>
-        public string Savepath { get; private set; }
 
         /// <summary>
         /// Gets the time it took to download all the qeued wallpapers.
@@ -80,6 +74,26 @@ namespace Haven
         public Wallpaper[] GetWallpapers { get { return _wallpapers.ToArray(); } }
 
         /// <summary>
+        /// Gets and sets the minimum wallpaper width.
+        /// </summary>
+        public int MinimumWidth { get; set; }
+
+        /// <summary>
+        /// Gets and sets the minimum wallpaper height.
+        /// </summary>
+        public int MinimumHeight { get; set; }
+
+        /// <summary>
+        /// Gets and sets the path where the wallpapers are saved.
+        /// </summary>
+        public string Savepath { get; set; }
+
+        /// <summary>
+        /// Gets and sets the download complete callback.
+        /// </summary>
+        public Action DownloadCompleteCallback { get; set; }
+
+        /// <summary>
         /// Initalize a Wallhaven class with the requested Url.
         /// </summary>
         /// <param name="url">Request Url</param>
@@ -99,19 +113,12 @@ namespace Haven
         /// <summary>
         /// Downloads wallpapers using the request Url.
         /// </summary>
-        /// <param name="savepath">Folder location to save to</param>
         /// <param name="pages">Number of pages to download</param>
         /// <param name="offset">Page offset</param>
-        /// <param name="downloadCompletedCallback">Callback function invoked when the download is complete</param>
-        public void StartDownload(string savepath = "", int pages = 1, int offset = 0, Action downloadCompletedCallback = null)
+        public void StartDownload(int pages = 1, int offset = 0)
         {
-            Savepath = savepath;
             Pages = pages;
             PageOffset = 0;
-
-            if (downloadCompletedCallback != null) {
-                _callback = downloadCompletedCallback;
-            }
 
             _downloading = true;
             _stopwatch.Start();
@@ -142,8 +149,8 @@ namespace Haven
 
                 DownloadTime = (int)_stopwatch.Elapsed.TotalSeconds;
 
-                if (_callback != null)
-                    _callback.Invoke();
+                if (DownloadCompleteCallback != null)
+                    DownloadCompleteCallback.Invoke();
 
                 return true;
             }
