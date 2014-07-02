@@ -236,7 +236,14 @@ namespace Haven
             HtmlNodeCollection listItems = doc.DocumentNode.SelectNodes("//li/@id");
             foreach (HtmlNode node in listItems) {
                 var id = Convert.ToInt32(node.Id.Substring(6, node.Id.Length - 6));
-                var wallpaper = new Wallpaper(id);
+
+                var resNode = node.SelectSingleNode(String.Format("//*[@id=\"thumb-{0}\"]/div/span[1]", id));
+                var resolution = resNode.InnerHtml.Trim().Split('x');
+
+                int width = int.Parse(resolution[0].Trim());
+                int height = int.Parse(resolution[1].Trim());
+
+                var wallpaper = new Wallpaper(id, width, height);
 
                 if (!UrlExist(wallpaper.Url))
                     wallpaper.Extension = Extension.Png;
@@ -274,12 +281,12 @@ namespace Haven
         /// <summary>
         /// Returns the wallpaper width.
         /// </summary>
-        public int Width { get { throw new NotImplementedException(); } }
+        public int Width { get; private set; }
 
         /// <summary>
         /// Returns the wallpaper heigth.
         /// </summary>
-        public int Heigth { get { throw new NotImplementedException(); } }
+        public int Heigth { get; private set; }
 
         /// <summary>
         /// Returns the download Url for the wallpaper.
@@ -299,6 +306,19 @@ namespace Haven
         {
             this.Id = id;
             this.Extension = Extension.Jpg;
+        }
+
+        /// <summary>
+        /// Initialize a wallpaper
+        /// </summary>
+        /// <param name="id">Wallpaper Id</param>
+        /// <param name="width">Width of the wallpaper</param>
+        /// <param name="height">Height of the wallpaper</param>
+        public Wallpaper(int id, int width, int height)
+            : this(id)
+        {
+            this.Width = width;
+            this.Heigth = height;
         }
     }
 }
