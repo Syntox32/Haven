@@ -1,4 +1,5 @@
 ﻿using System;
+using System.IO;
 using Newtonsoft.Json;
 
 namespace Haven
@@ -14,14 +15,18 @@ namespace Haven
             public string Url { get; set; }
             public int Pages { get; set; }
             public int PageOffset { get; set; }
+            public int MinHeight { get; set; }
+            public int MinWidth { get; set; }
         }
 
         static string config = @"
         {
 	        'SaveLocation': 'images/',
-	        'Url': 'http://alpha.wallhaven.cc/wallpaper/search?categories=101&purity=100&sorting=relevance&order=desc',
-	        'Pages': 2,
-	        'PageOffset': 0
+	        'Url': 'http://alpha.wallhaven.cc/wallpaper/search?categories=100&purity=100&sorting=favorites&order=desc',
+	        'Pages': 1,
+	        'PageOffset': 0,
+            'MinWidth': 1200,
+            'MinHeight': 1920
         }";
 
         static void Main(string[] args)
@@ -33,7 +38,15 @@ namespace Haven
             Settings settings = JsonConvert.DeserializeObject<Settings>(config);
             Console.WriteLine("Config loaded successfully...");
 
-            var haven = new Wallhaven(settings.Url);
+            if (!Directory.Exists(settings.SaveLocation))
+                Directory.CreateDirectory(settings.SaveLocation);
+
+            var haven = new Wallhaven(settings.Url)
+            {
+                Savepath = settings.SaveLocation,
+                MinimumWidth = settings.MinWidth,
+                MinimumHeight = settings.MinHeight
+            };
 
             Action callback = () =>
             {
@@ -47,12 +60,8 @@ namespace Haven
 
             Console.WriteLine(Environment.NewLine + "Preparing to download..." + Environment.NewLine);
 
-            haven.StartDownload(
-                settings.SaveLocation,
-                settings.Pages,
-                settings.PageOffset,
-                callback
-            );
+            haven.DownloadCompleteCallback = callback;
+            haven.StartDownload(settings.Pages, settings.PageOffset);
 
             Console.ReadKey();
         }
