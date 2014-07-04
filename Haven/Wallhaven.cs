@@ -14,7 +14,6 @@ namespace Haven
     /// </summary>
     public class Wallhaven
     {
-        private string _result;
         private bool _downloading;
 
         private List<Wallpaper> _wallpapers;
@@ -229,14 +228,15 @@ namespace Haven
         private void QeueDownload(int page)
         {
             var url = String.Format(URL + "&page={0}", page);
+            var result = String.Empty;
 
             using (var client = new WebClient()) {
                 client.Proxy = null;
-                _result = client.DownloadString(url);
+                result = client.DownloadString(url);
             }
 
             var doc = new HtmlDocument();
-            doc.LoadHtml(_result);
+            doc.LoadHtml(result);
 
             HtmlNodeCollection listItems = doc.DocumentNode.SelectNodes("//li/@id");
             foreach (HtmlNode node in listItems) {
