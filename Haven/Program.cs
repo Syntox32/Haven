@@ -21,10 +21,10 @@ namespace Haven
 
         static string config = @"
         {
-	        'SaveLocation': 'images/',
-	        'Url': 'http://alpha.wallhaven.cc/wallpaper/search?categories=100&purity=100&sorting=favorites&order=desc',
-	        'Pages': 1,
-	        'PageOffset': 0,
+            'SaveLocation': 'images/',
+            'Url': 'http://alpha.wallhaven.cc/wallpaper/search?categories=100&purity=100&sorting=favorites&order=desc',
+            'Pages': 1,
+            'PageOffset': 0,
             'MinWidth': 1200,
             'MinHeight': 1920
         }";
