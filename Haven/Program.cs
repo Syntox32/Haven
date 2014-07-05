@@ -17,6 +17,8 @@ namespace Haven
             public int PageOffset { get; set; }
             public int MinHeight { get; set; }
             public int MinWidth { get; set; }
+            public string Username { get; set; }
+            public string Password { get; set; }
         }
 
         static string config = @"
@@ -26,7 +28,9 @@ namespace Haven
             'Pages': 1,
             'PageOffset': 0,
             'MinWidth': 1200,
-            'MinHeight': 1920
+            'MinHeight': 1920,
+            'Username': '',
+            'Password': ''
         }";
 
         static void Main(string[] args)
@@ -41,7 +45,7 @@ namespace Haven
             if (!Directory.Exists(settings.SaveLocation))
                 Directory.CreateDirectory(settings.SaveLocation);
 
-            var haven = new Wallhaven(settings.Url)
+            var haven = new Wallhaven(settings.Url, settings.Username, settings.Password, false)
             {
                 Savepath = settings.SaveLocation,
                 MinimumWidth = settings.MinWidth,
