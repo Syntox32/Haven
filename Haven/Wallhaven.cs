@@ -1,5 +1,6 @@
 ﻿using System;
 using System.Collections.Generic;
+using System.Collections.Specialized;
 using System.ComponentModel;
 using System.Diagnostics;
 using System.Linq;
@@ -15,6 +16,7 @@ namespace Haven
     public class Wallhaven
     {
         private bool _downloading;
+        private bool _requireLogin;
 
         private List<Wallpaper> _wallpapers;
         private Queue<Wallpaper> _qeue;
@@ -44,6 +46,16 @@ namespace Haven
         /// Gets the time it took to download all the qeued wallpapers.
         /// </summary>
         public double DownloadTime { get; private set; }
+
+        /// <summary>
+        /// Username used for authenticating
+        /// </summary>
+        public string Username { get; private set; }
+
+        /// <summary>
+        /// Password used for authenticating
+        /// </summary>
+        public string Password { get; private set; }
 
         /// <summary>
         /// Returns a boolean representing the download state.
@@ -105,6 +117,24 @@ namespace Haven
             _stopwatch = new Stopwatch();
             _wallpapers = new List<Wallpaper>();
             _downloading = false;
+            _requireLogin = false;
+        }
+
+        /// <summary>
+        /// Initalize a Wallhaven class with the requested Url.
+        /// Also set credentials used for authentication.
+        /// </summary>
+        /// <param name="url">Request URL</param>
+        /// <param name="username">Username</param>
+        /// <param name="password">Password</param>
+        /// <param name="login">To auth or not to auth</param>
+        public Wallhaven(string url, string username, string password, bool login)
+            : this(url)
+        {
+            _requireLogin = login;
+
+            Username = username;
+            Password = password;
         }
 
         /// <summary>
@@ -230,8 +260,35 @@ namespace Haven
             var url = String.Format(URL + "&page={0}", page);
             var result = String.Empty;
 
-            using (var client = new WebClient()) {
+            using (var client = new CookieClient())
+            {
                 client.Proxy = null;
+
+                if (_requireLogin)
+                {
+                    Console.WriteLine(String.Format("[Page: {0}] Authentication required, authenticating...", page));
+
+                    var authUrl = @"http://alpha.wallhaven.cc/auth/login";
+                    var loginPage = client.DownloadString(authUrl);
+                    var document = new HtmlDocument();
+
+                    document.LoadHtml(loginPage);
+
+                    var tokenNode = document.DocumentNode.SelectSingleNode("//input[@type=\"hidden\" and @name=\"_token\"]");
+                    var randomToken = tokenNode.Attributes["value"].Value;
+
+                    var credentials = new NameValueCollection
+                    {
+                        { "_token", randomToken },
+                        { "username", Username },
+                        { "password", Password }
+                    };
+
+                    client.UploadValues(authUrl, "post", credentials);
+
+                    Console.WriteLine(String.Format("[Page: {0}] Authentication successfull", page) + Environment.NewLine);
+                }
+
                 result = client.DownloadString(url);
             }
 
@@ -239,7 +296,9 @@ namespace Haven
             doc.LoadHtml(result);
 
             HtmlNodeCollection listItems = doc.DocumentNode.SelectNodes("//li/@id");
-            foreach (HtmlNode node in listItems) {
+
+            foreach (HtmlNode node in listItems) 
+            {
                 var id = Convert.ToInt32(node.Id.Substring(6, node.Id.Length - 6));
 
                 var resNode = node.SelectSingleNode(String.Format("//*[@id=\"thumb-{0}\"]/div/span[1]", id));
@@ -326,6 +385,30 @@ namespace Haven
         {
             this.Width = width;
             this.Height = height;
+        }
+    }
+
+    /// <summary>
+    /// Class that inherits WebClient to be able to hold cookies
+    /// </summary>
+    public class CookieClient : WebClient
+    {
+        private CookieContainer _cookie = new CookieContainer();
+
+        /// <summary>
+        /// Override method to keep cookies
+        /// </summary>
+        /// <param name="address">Request Uri</param>
+        /// <returns>WebRequest</returns>
+        protected override WebRequest GetWebRequest(Uri address)
+        {
+            HttpWebRequest req = (HttpWebRequest)base.GetWebRequest(address);
+            req.ProtocolVersion = HttpVersion.Version10;
+
+            if (req is HttpWebRequest)
+                (req as HttpWebRequest).CookieContainer = _cookie;
+
+            return req;
         }
     }
 }
