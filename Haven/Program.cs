@@ -9,48 +9,22 @@ namespace Haven
     /// </summary>
     class Program
     {
-        struct Settings
-        {
-            public string SaveLocation { get; set; }
-            public string Url { get; set; }
-            public int Pages { get; set; }
-            public int PageOffset { get; set; }
-            public int MinHeight { get; set; }
-            public int MinWidth { get; set; }
-            public string Username { get; set; }
-            public string Password { get; set; }
-        }
-
-        static string config = @"
-        {
-            'SaveLocation': 'images/',
-            'Url': 'http://alpha.wallhaven.cc/wallpaper/search?categories=100&purity=100&sorting=favorites&order=desc',
-            'Pages': 1,
-            'PageOffset': 0,
-            'MinWidth': 1200,
-            'MinHeight': 1920,
-            'Username': '',
-            'Password': ''
-        }";
-
         static void Main(string[] args)
         {
             Console.WriteLine("Wallhaven[Alpha] Downloader");
             Console.WriteLine("============================");
 
             Console.WriteLine("Loading config...");
-            Settings settings = JsonConvert.DeserializeObject<Settings>(config);
+
+            string json = File.ReadAllText("haven.json");
+            Settings settings = JsonConvert.DeserializeObject<Settings>(json);
+
             Console.WriteLine("Config loaded successfully...");
 
             if (!Directory.Exists(settings.SaveLocation))
                 Directory.CreateDirectory(settings.SaveLocation);
 
-            var haven = new Wallhaven(settings.Url, settings.Username, settings.Password, false)
-            {
-                Savepath = settings.SaveLocation,
-                MinimumWidth = settings.MinWidth,
-                MinimumHeight = settings.MinHeight
-            };
+            var haven = new Wallhaven(settings);
 
             Action callback = () =>
             {
@@ -65,7 +39,7 @@ namespace Haven
             Console.WriteLine(Environment.NewLine + "Preparing to download..." + Environment.NewLine);
 
             haven.DownloadCompleteCallback = callback;
-            haven.StartDownload(settings.Pages, settings.PageOffset);
+            haven.StartDownload();
 
             Console.ReadKey();
         }
