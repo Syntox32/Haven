@@ -33,7 +33,7 @@ It is worth noting the authentication on the site does <strong>not</strong> carr
 
 Requirements
 ------------
- Both <strong>HtmlAgilityPack</strong> and <strong>Newtonsoft.Json</strong> is required for the class to build
+ Both <strong>HtmlAgilityPack</strong> and <strong>Newtonsoft.Json</strong> are required for the class to build
  
  If you choose to download the project, NuGet comes configured to download the required packages on the first build.
  
