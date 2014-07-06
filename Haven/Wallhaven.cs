@@ -5,11 +5,28 @@ using System.ComponentModel;
 using System.Diagnostics;
 using System.Linq;
 
+using System.IO;
 using System.Net;
 using HtmlAgilityPack;
+using Newtonsoft.Json;
 
 namespace Haven
 {
+    /// <summary>
+    /// Struct to hold all the settings for the wallhaven class
+    /// </summary>
+    public struct Settings
+    {
+        public string SaveLocation { get; set; }
+        public string Url { get; set; }
+        public int Pages { get; set; }
+        public int PageOffset { get; set; }
+        public int MinHeight { get; set; }
+        public int MinWidth { get; set; }
+        public string Username { get; set; }
+        public string Password { get; set; }
+    }
+
     /// <summary>
     /// Class for qeueing and downloading wallpapers from wallhaven.
     /// </summary>
@@ -106,9 +123,12 @@ namespace Haven
         /// Initalize a Wallhaven class with the requested Url.
         /// </summary>
         /// <param name="url">Request Url</param>
-        public Wallhaven(string url)
+        /// <param name="pages">Number of pages to download</param>
+        public Wallhaven(string url, int pages)
         {
             URL = url;
+            Pages = pages;
+            PageOffset = 0;
 
             // Check to see if the site is still in alpha
             if (!url.Contains("alpha."))
@@ -125,11 +145,12 @@ namespace Haven
         /// Also set credentials used for authentication.
         /// </summary>
         /// <param name="url">Request URL</param>
+        /// <param name="pages">Number of pages to download</param>
         /// <param name="username">Username</param>
         /// <param name="password">Password</param>
         /// <param name="login">To auth or not to auth</param>
-        public Wallhaven(string url, string username, string password, bool login)
-            : this(url)
+        public Wallhaven(string url, int pages, string username, string password, bool login)
+            : this(url, pages)
         {
             _requireLogin = login;
 
@@ -138,23 +159,52 @@ namespace Haven
         }
 
         /// <summary>
+        /// Initalize a Wallhaven class with a settings config file
+        /// </summary>
+        /// <param name="JSONconfigPath">Path for the JSON-config</param>
+        public Wallhaven(string JSONconfigPath)
+            : this(JsonConvert.DeserializeObject<Settings>(
+                File.ReadAllText(JSONconfigPath))) { }
+
+        /// <summary>
+        /// Initalize the Wallhaven class with a Settings object
+        /// </summary>
+        /// <param name="settings">Settings object</param>
+        public Wallhaven(Settings settings)
+            : this(settings.Url, settings.Pages)
+        {
+            Savepath = settings.SaveLocation;
+            MinimumWidth = settings.MinWidth;
+            MinimumHeight = settings.MinHeight;
+
+            Pages = settings.Pages;
+            PageOffset = settings.PageOffset;
+
+            Username = settings.Username;
+            Password = settings.Password;
+
+            if (!String.IsNullOrWhiteSpace(Username)
+                && !String.IsNullOrWhiteSpace(Password))
+                _requireLogin = true;
+            else
+                _requireLogin = false;
+        }
+
+        /// <summary>
         /// Downloads wallpapers using the request Url.
         /// </summary>
         /// <param name="pages">Number of pages to download</param>
         /// <param name="offset">Page offset</param>
-        public void StartDownload(int pages = 1, int offset = 0)
+        public void StartDownload()
         {
-            Pages = pages;
-            PageOffset = 0;
-
             _downloading = true;
             _stopwatch.Start();
 
-            if (pages > 1)
-                for (int i = 1; i <= pages; i++)
-                    QeueDownload(i + offset);
+            if (Pages > 1)
+                for (int i = 1; i <= Pages; i++)
+                    QeueDownload(i + PageOffset);
             else
-                QeueDownload(pages + offset);
+                QeueDownload(Pages + PageOffset);
 
             _qeue = new Queue<Wallpaper>();
             foreach (var wall in _wallpapers)
