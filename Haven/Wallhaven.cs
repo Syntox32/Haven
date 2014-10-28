@@ -345,17 +345,18 @@ namespace Haven
             var doc = new HtmlDocument();
             doc.LoadHtml(result);
 
-            HtmlNodeCollection listItems = doc.DocumentNode.SelectNodes("//li/@id");
+            HtmlNodeCollection listItems = doc.DocumentNode.SelectNodes("//section/ul/li/figure/a");
 
             foreach (HtmlNode node in listItems) 
             {
-                var id = Convert.ToInt32(node.Id.Substring(6, node.Id.Length - 6));
+                var link = node.Attributes["href"].Value;
+                var id = Convert.ToInt32(link.Split('/').Last());
 
-                var resNode = node.SelectSingleNode(String.Format("//*[@id=\"thumb-{0}\"]/div/span[1]", id));
+                var resNode = node.SelectSingleNode(String.Format("//section/ul/li/figure/div/span", id));
                 var resolution = resNode.InnerHtml.Trim().Split('x');
 
-                int height = int.Parse(resolution[0].Trim());
-                int width = int.Parse(resolution[1].Trim());
+                int width = int.Parse(resolution[0].Trim());
+                int height = int.Parse(resolution[1].Trim());
 
                 var wallpaper = new Wallpaper(id, width, height);
 
@@ -377,7 +378,7 @@ namespace Haven
     /// </summary>
     public class Wallpaper
     {
-        private const string _downloadUrl = @"http://alpha.wallhaven.cc/wallpapers/full/wallhaven-{0}.{1}";
+        private const string _downloadUrl = @"http://wallpapers.wallhaven.cc/wallpapers/full/wallhaven-{0}.{1}";
 
         /// <summary>
         /// Returns what kind of extension the wallpaper has.
