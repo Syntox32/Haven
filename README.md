@@ -13,11 +13,11 @@ For the class to build using a Json config you need to configure the following t
 ```
 {
 	"SaveLocation": "",
-	"Url": "http://alpha.wallhaven.cc/wallpaper/search?categor...",
+	"Url": "http://wallpapers.wallhaven.cc/wallpaper/search?categor...",
 	"Pages": 1,
 	"PageOffset": 0,
-	"MinWidth": 1200,
-	"MinHeight": 1920,
+	"MinWidth": 1920,
+	"MinHeight": 1200,
 	"Username": "",
 	"Password": ""
 }
