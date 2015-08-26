@@ -6,6 +6,7 @@
 *.user
 *.sln.docstates
 *.vs/
+*.nuget/
 
 # Build results
 
