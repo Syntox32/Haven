@@ -162,6 +162,13 @@ namespace Haven.Core
             string path = Savepath + string.Format("wallpaper-{0}.{1}",
                 wallpaper.Id, wallpaper.Extension == Extension.Jpg ? "jpg" : "png");
 
+            var dir = Path.GetDirectoryName(path);
+            if (!Directory.Exists(dir))
+            {
+                Console.WriteLine("Creating directory: " + dir);
+                Directory.CreateDirectory(dir);
+            }
+
             Console.WriteLine("[ID: {0}] Downloading: {1}", wallpaper.Id, wallpaper.Name);
 
             using (var client = new WebClient())
