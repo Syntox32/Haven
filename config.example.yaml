@@ -1,0 +1,36 @@
+---
+#
+# Haven YAML config file 
+#
+
+# Filter URL
+url: "http://alpha.wallhaven.cc/search?categories=101&purity=100&sorting=date_added&order=desc"
+
+# Folder to save the images.
+# This is relative to the directory you're executing from
+# if the folder does not exist, it will be created for you.
+save_location: "images/"
+
+# Number of pages you want to download from the
+# given url.
+# One page is usually 24 wallpapers.
+pages: 1
+page_offset: 0
+
+# It's recommended to not use this and rather
+# filter the resolution through the url.
+min_width: 1920
+min_heigth: 1200
+
+# Sets if the application will use the
+# min_width and min_height variables
+# to filter wallpapers
+use_min: false
+
+# If the application will attempt to
+# authenticate using the given password
+# and username.
+use_auth: false
+
+username: "example"
+password: "hunter2"
