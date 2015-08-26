@@ -19,6 +19,7 @@ namespace Haven.Core
     {
         private bool _downloading;
         private bool _requireLogin;
+        private bool _checkWallpaperBounds;
 
         private List<Wallpaper> _wallpapers;
         private Queue<Wallpaper> _qeue;
@@ -107,15 +108,23 @@ namespace Haven.Core
             Username = settings.Username;
             Password = settings.Password;
 
-            if (!String.IsNullOrWhiteSpace(Username)
-                && !String.IsNullOrWhiteSpace(Password))
-                _requireLogin = true;
-            else
+            _requireLogin = settings.UseAuth;
+            _checkWallpaperBounds = settings.UseMin;
+
+            if ((String.IsNullOrWhiteSpace(Username)
+                || String.IsNullOrWhiteSpace(Password)) && _requireLogin)
+            {
+                Console.WriteLine("Username and/or password cannot be null.");
+                Console.WriteLine("[[ User authentication disabled ]]\n");
+
                 _requireLogin = false;
+            }
         }
 
         public void StartDownload()
         {
+            Console.WriteLine("Started up");
+
             _downloading = true;
             _stopwatch.Start();
 
@@ -154,7 +163,8 @@ namespace Haven.Core
 
         private async void DownloadWallpapers()
         {
-            if (ShouldStop()) return;
+            if (ShouldStop())
+                return;
 
             var wallpaper = _qeue.Dequeue();
             var uri = new Uri(wallpaper.Url);
@@ -279,9 +289,15 @@ namespace Haven.Core
                 if (!UrlExist(wallpaper.Url))
                     wallpaper.Extension = Extension.Png;
 
-                if (wallpaper.Width >= MinimumWidth
-                    && wallpaper.Height >= MinimumHeight)
+                if (!_checkWallpaperBounds)
+                {
                     _wallpapers.Add(wallpaper);
+                }
+                else if (_checkWallpaperBounds)
+                {
+                    if (wallpaper.Width >= MinimumWidth && wallpaper.Height >= MinimumHeight)
+                        _wallpapers.Add(wallpaper);
+                }
             }
         }
     }
