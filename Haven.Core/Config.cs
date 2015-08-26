@@ -1,12 +1,6 @@
 ﻿using System;
-using System.Collections.Generic;
 using System.IO;
-using System.Linq;
-using System.Text;
-using System.Threading.Tasks;
-using YamlDotNet;
 using YamlDotNet.Serialization;
-
 
 namespace Haven.Core
 {
@@ -14,11 +8,18 @@ namespace Haven.Core
     { 
         public static Settings LoadYamlConfig(string path)
         {
-            return new Deserializer().Deserialize<Settings>(File.OpenText(path));
+            // i just noticed how little support .net
+            // has for yaml, god damnit
+            var reader = File.OpenText(path);
+
+            var deserializer = new Deserializer(ignoreUnmatched: true);
+            var settings = deserializer.Deserialize<Settings>(reader);
+
+            return settings;
         }
     }
 
-    public struct Settings
+    public class Settings
     {
         [YamlMember(Alias = "save_location")]
         public string SaveLocation { get; set; }
