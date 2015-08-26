@@ -1,6 +1,7 @@
 ﻿using System;
 using System.IO;
-using Newtonsoft.Json;
+
+using Haven.Core;
 
 namespace Haven
 {
@@ -11,22 +12,23 @@ namespace Haven
     {
         static void Main(string[] args)
         {
-            Console.WriteLine("Wallhaven[Alpha] Downloader");
-            Console.WriteLine("============================");
+            //Console.WriteLine("Wallhaven[Alpha] Downloader");
+            //Console.WriteLine("============================");
 
-            Console.WriteLine("Loading config...");
+            // Console.WriteLine("Loading config...");
 
-            string json = File.ReadAllText("haven.json");
-            Settings settings = JsonConvert.DeserializeObject<Settings>(json);
+            // string json = File.ReadAllText("haven.json");
 
-            Console.WriteLine("Config loaded successfully...");
+            // Console.WriteLine("Config loaded successfully...");
 
-            if (!Directory.Exists(settings.SaveLocation))
-                Directory.CreateDirectory(settings.SaveLocation);
+            
+            // if (!Directory.Exists(settings.SaveLocation))
+            //    Directory.CreateDirectory(settings.SaveLocation);
 
-            var haven = new Wallhaven(settings);
+            //var haven = new Wallhaven(settings);
+           // haven.CompleteHandler += Haven_CompleteHandler;
 
-            Action callback = () =>
+            /*Action callback = () =>
             {
                 Console.WriteLine("\nProcess completed - Download qeue is empty");
                 Console.WriteLine("Wallpapers downloaded: {0}, Errors: {1}", haven.GetWallpaperCount, haven.Errors);
@@ -34,12 +36,11 @@ namespace Haven
 
                 Console.WriteLine(Environment.NewLine + "Press any key to continue...");
                 Console.ReadKey();
-            };
+            };*/
 
-            Console.WriteLine(Environment.NewLine + "Preparing to download..." + Environment.NewLine);
+            //Console.WriteLine(Environment.NewLine + "Preparing to download..." + Environment.NewLine);
 
-            haven.DownloadCompleteCallback = callback;
-            haven.StartDownload();
+            //haven.StartDownload();
 
             Console.ReadKey();
         }

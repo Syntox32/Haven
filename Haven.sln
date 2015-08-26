@@ -14,6 +14,8 @@ Project("{2150E333-8FDC-42A3-9474-1A3956D46DE8}") = ".nuget", ".nuget", "{B7ADAB
 EndProject
 Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "Haven.Core", "Haven.Core\Haven.Core.csproj", "{9B00E57D-3225-40D9-BDBE-AE0DFF0478B4}"
 EndProject
+Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "Haven.Forms", "Haven.Forms\Haven.Forms.csproj", "{2C6E8D14-0B60-4946-A457-E79FCB47690F}"
+EndProject
 Global
 	GlobalSection(SolutionConfigurationPlatforms) = preSolution
 		Debug|Any CPU = Debug|Any CPU
@@ -28,6 +30,10 @@ Global
 		{9B00E57D-3225-40D9-BDBE-AE0DFF0478B4}.Debug|Any CPU.Build.0 = Debug|Any CPU
 		{9B00E57D-3225-40D9-BDBE-AE0DFF0478B4}.Release|Any CPU.ActiveCfg = Release|Any CPU
 		{9B00E57D-3225-40D9-BDBE-AE0DFF0478B4}.Release|Any CPU.Build.0 = Release|Any CPU
+		{2C6E8D14-0B60-4946-A457-E79FCB47690F}.Debug|Any CPU.ActiveCfg = Debug|Any CPU
+		{2C6E8D14-0B60-4946-A457-E79FCB47690F}.Debug|Any CPU.Build.0 = Debug|Any CPU
+		{2C6E8D14-0B60-4946-A457-E79FCB47690F}.Release|Any CPU.ActiveCfg = Release|Any CPU
+		{2C6E8D14-0B60-4946-A457-E79FCB47690F}.Release|Any CPU.Build.0 = Release|Any CPU
 	EndGlobalSection
 	GlobalSection(SolutionProperties) = preSolution
 		HideSolutionNode = FALSE
