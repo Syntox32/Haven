@@ -11,7 +11,7 @@ namespace Haven.Cli
 {
     class Program
     {
-        public static void Main(string[] args)
+        static void Main(string[] args)
         {
             Console.WriteLine("Wallhaven[Alpha] Batch downloader\n");
             Console.WriteLine("Project: https://github.com/Syntox32/Haven");
