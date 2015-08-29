@@ -130,9 +130,9 @@ namespace Haven.Core
 
             if (Pages > 1)
                 for (int i = 1; i <= Pages; i++)
-                    QeueDownload(i + PageOffset);
+                    QueueDownload(i + PageOffset);
             else
-                QeueDownload(Pages + PageOffset);
+                QueueDownload(Pages + PageOffset);
 
             _qeue = new Queue<Wallpaper>();
             foreach (var wall in _wallpapers)
@@ -231,7 +231,7 @@ namespace Haven.Core
             DownloadWallpapers();
         }
 
-        private void QeueDownload(int page)
+        private void QueueDownload(int page)
         {
             var url = String.Format(URL + "&page={0}", page);
             var result = String.Empty;
