@@ -13,6 +13,13 @@ In this repo you will find the following:
 | Haven.Forms | A more user friendly graphical interface. | `work in progress`  
 | Haven.Core | Main haven core framework, used in the other projects. | `working`          
 
+Download
+--------
+
+For now only binaries for the CLI version is available.
+
+[You cant get it here, under releases](https://github.com/Syntox32/Haven/releases)
+
 Usage
 -----
 
