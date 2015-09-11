@@ -126,6 +126,8 @@ namespace Haven.Core
                 Directory.CreateDirectory(Savepath);
             }
 
+            Console.WriteLine("Download folder: {0}\n", Savepath);
+
             Console.WriteLine("Queueing wallpapers...");
 
             _downloading = true;
@@ -174,8 +176,8 @@ namespace Haven.Core
             var client = _clientQueue.Take();
             var wallpaper = _queue.Dequeue();
 
-            string path = Savepath + string.Format("wallpaper-{0}.{1}",
-                wallpaper.Id, wallpaper.Extension == Extension.Jpg ? "jpg" : "png");
+            string path = Path.Combine(Savepath, string.Format("wallpaper-{0}.{1}",
+                wallpaper.Id, wallpaper.Extension == Extension.Jpg ? "jpg" : "png"));
 
             Console.WriteLine("[ID: {0}] Downloading: {1}", wallpaper.Id, wallpaper.Name);
 
@@ -204,8 +206,15 @@ namespace Haven.Core
 
         private void DownloadFileCompleted(object sender, AsyncCompletedEventArgs e)
         {
-            if (e.Error != null)
-                throw e.Error;
+            try
+            {
+                if (e.Error != null)
+                    throw e.Error;
+            }
+            catch (Exception ex)
+            {
+                Console.WriteLine("Error while downloading:\n  {0}", ex.Message);
+            }
 
             if (e.Cancelled)
                 return;
