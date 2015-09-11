@@ -3,11 +3,12 @@ using System.Collections.Generic;
 using System.Collections.Specialized;
 using System.ComponentModel;
 using System.Diagnostics;
+
 using System.IO;
-using System.Linq;
 using System.Net;
-using System.Text;
-using System.Threading.Tasks;
+using System.Linq;
+using System.Collections.Concurrent;
+
 using HtmlAgilityPack;
 
 namespace Haven.Core
@@ -20,10 +21,12 @@ namespace Haven.Core
         private bool _downloading;
         private bool _requireLogin;
         private bool _checkWallpaperBounds;
+        private int _clientUpperBound;
 
         private List<Wallpaper> _wallpapers;
-        private Queue<Wallpaper> _qeue;
+        private Queue<Wallpaper> _queue;
         private Stopwatch _stopwatch;
+        private BlockingCollection<WebClient> _clientQueue;
 
         public int Pages { get; private set; }
         public int PageOffset { get; private set; }
@@ -37,31 +40,11 @@ namespace Haven.Core
         public int MinimumHeight { get; set; }
         public string Savepath { get; set; }
 
-        public bool IsDownloading
-        {
-            get { return _downloading; }
-        }
-
-        public int GetThumbsPerPage
-        {
-            get { return (int)Math.Round((double)(_wallpapers.Count / Pages)); }
-        }
-
-        public int GetDownloadCount
-        {
-            get { return _wallpapers.Count - _qeue.Count; }
-        }
-
-        public int GetWallpaperCount
-        {
-            get { return _wallpapers.Count; }
-        }
-
-        public Wallpaper[] GetWallpapers
-        {
-            get { return _wallpapers.ToArray(); }
-
-        }
+        public bool IsDownloading { get { return _downloading; } }
+        public int GetThumbsPerPage { get { return (int)Math.Round((double)(_wallpapers.Count / Pages)); } }
+        public int GetDownloadCount { get { return _wallpapers.Count - _queue.Count; } }
+        public int GetWallpaperCount { get { return _wallpapers.Count; } }
+        public Wallpaper[] GetWallpapers { get { return _wallpapers.ToArray(); } }
 
         public delegate void DownloadCompletedHandler(object sender, HavenEventArgs e);
         public event DownloadCompletedHandler CompleteHandler;
@@ -80,6 +63,18 @@ namespace Haven.Core
             _wallpapers = new List<Wallpaper>();
             _downloading = false;
             _requireLogin = false;
+
+            _clientUpperBound = 4;
+            _clientQueue = new BlockingCollection<WebClient>(_clientUpperBound);
+
+            for(int i = 0; i < _clientUpperBound; i++)
+            {
+                var client = new WebClient();
+                client.Proxy = null;
+
+                client.DownloadFileCompleted += DownloadFileCompleted;
+                _clientQueue.Add(client);
+            }
         }
 
         public Wallhaven(string url, int pages, string username, string password, bool login)
@@ -123,82 +118,69 @@ namespace Haven.Core
 
         public void StartDownload()
         {
-            Console.WriteLine("Started up");
+            Console.WriteLine("Started up..");
+
+            if (!Directory.Exists(Savepath))
+            {
+                Console.WriteLine("Creating directory: " + Savepath);
+                Directory.CreateDirectory(Savepath);
+            }
+
+            Console.WriteLine("Queueing wallpapers...");
 
             _downloading = true;
             _stopwatch.Start();
 
-            if (Pages > 1)
-                for (int i = 1; i <= Pages; i++)
-                    QueueDownload(i + PageOffset);
-            else
-                QueueDownload(Pages + PageOffset);
-
-            _qeue = new Queue<Wallpaper>();
-            foreach (var wall in _wallpapers)
-                _qeue.Enqueue(wall);
-
-            DownloadWallpapers();
-        }
-
-        private bool ShouldStop()
-        {
-            if (!_qeue.Any())
+            Console.WriteLine("Queueing {0} page(s)..\n", Pages);
+            for(int i = 1; i <= Pages; i++)
             {
-                _stopwatch.Stop();
-                _downloading = false;
-
-                DownloadTime = (int)_stopwatch.Elapsed.TotalSeconds;
-
-                if (CompleteHandler != null)
-                {
-                    var args = new HavenEventArgs(DownloadTime, GetDownloadCount);
-                    CompleteHandler(this, args);
-                }
-
-                return true;
+                Console.WriteLine(" Page {0}..", i);
+                QueueDownload(i + PageOffset);
             }
-            return false;
+
+            _queue = new Queue<Wallpaper>();
+            _wallpapers.ForEach(x => _queue.Enqueue(x));
+
+            Console.WriteLine("\nQueued {0} wallpaper(s).", _queue.Count);
+            Console.WriteLine("Done queueing.");
+            Console.WriteLine("\nStarting download...");
+
+            try
+            {
+                while (_queue.Any())
+                    DownloadSingleWallpaper();
+            }
+            catch (Exception ex)
+            {
+                Console.WriteLine("Error while downloading:\n  {0}", ex.Message);
+            }
+
+            Console.WriteLine("Download completed.");
+
+            _stopwatch.Stop();
+            _downloading = false;
+
+            DownloadTime = (int)_stopwatch.Elapsed.TotalSeconds;
+
+            if (CompleteHandler != null)
+            {
+                var args = new HavenEventArgs(DownloadTime, GetDownloadCount);
+                CompleteHandler(this, args);
+            }
         }
 
-        private async void DownloadWallpapers()
+        private void DownloadSingleWallpaper()
         {
-            if (ShouldStop())
-                return;
-
-            var wallpaper = _qeue.Dequeue();
-            var uri = new Uri(wallpaper.Url);
+            var client = _clientQueue.Take();
+            var wallpaper = _queue.Dequeue();
 
             string path = Savepath + string.Format("wallpaper-{0}.{1}",
                 wallpaper.Id, wallpaper.Extension == Extension.Jpg ? "jpg" : "png");
 
-            var dir = Path.GetDirectoryName(path);
-            if (!Directory.Exists(dir))
-            {
-                Console.WriteLine("Creating directory: " + dir);
-                Directory.CreateDirectory(dir);
-            }
-
             Console.WriteLine("[ID: {0}] Downloading: {1}", wallpaper.Id, wallpaper.Name);
 
-            using (var client = new WebClient())
-            {
-                client.Proxy = null;
-
-                try
-                {
-                    client.DownloadFileCompleted += DownloadFileCompleted;
-                    await client.DownloadFileTaskAsync(uri, path);
-                }
-                catch (WebException ex)
-                {
-                    var response = (HttpWebResponse)ex.Response;
-                    Console.WriteLine("[ID: {0}] Error: Download failed [Status: {1}]",
-                        wallpaper.Id, (int)response.StatusCode);
-
-                    Errors++;
-                }
-            }
+            client.DownloadFileAsync(new Uri(wallpaper.Url), path,
+                new ClientDownloadArgs(wallpaper.Url, path, client));
         }
 
         private static bool UrlExist(string url)
@@ -228,11 +210,14 @@ namespace Haven.Core
             if (e.Cancelled)
                 return;
 
-            DownloadWallpapers();
+            var args = (ClientDownloadArgs)e.UserState;
+            _clientQueue.Add(args.Client);
         }
 
         private void QueueDownload(int page)
         {
+
+
             var url = String.Format(URL + "&page={0}", page);
             var result = String.Empty;
 
@@ -304,13 +289,27 @@ namespace Haven.Core
 
     public class HavenEventArgs : EventArgs
     {
-        public double DownloadTime { get; set; }
-        public int DownloadCount { get; set; }
+        public double DownloadTime { get; private set; }
+        public int DownloadCount { get; private set; }
 
         public HavenEventArgs(double time, int count)
         {
             this.DownloadTime = time;
             this.DownloadCount = count;
+        }
+    }
+
+    public class ClientDownloadArgs
+    {
+        public string Url { get; private set; }
+        public string Filename { get; private set; }
+        public WebClient Client { get; private set; }
+
+        public ClientDownloadArgs(string url, string filename, WebClient client)
+        {
+            this.Url = url;
+            this.Filename = filename;
+            this.Client = client;
         }
     }
 }
