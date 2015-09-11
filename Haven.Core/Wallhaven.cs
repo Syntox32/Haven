@@ -22,10 +22,12 @@ namespace Haven.Core
         private bool _requireLogin;
         private bool _checkWallpaperBounds;
         private int _clientUpperBound;
+        private double _timeout;
 
         private List<Wallpaper> _wallpapers;
         private Queue<Wallpaper> _queue;
         private Stopwatch _stopwatch;
+        private Stopwatch _timeoutTimer;
         private BlockingCollection<WebClient> _clientQueue;
 
         public int Pages { get; private set; }
@@ -60,10 +62,12 @@ namespace Haven.Core
                 Console.WriteLine("[[ Please beware this verison may be outdated ]]");
 
             _stopwatch = new Stopwatch();
+            _timeoutTimer = new Stopwatch();
             _wallpapers = new List<Wallpaper>();
             _downloading = false;
             _requireLogin = false;
 
+            _timeout = 10.0; // seconds;
             _clientUpperBound = 4;
             _clientQueue = new BlockingCollection<WebClient>(_clientUpperBound);
 
@@ -147,10 +151,23 @@ namespace Haven.Core
             Console.WriteLine("Done queueing.");
             Console.WriteLine("\nStarting download...");
 
+            _timeoutTimer.Start();
+
             try
             {
                 while (_queue.Any())
+                {
+                    if ((_timeoutTimer.ElapsedMilliseconds / 1000.0) > _timeout)
+                    {
+                        Console.WriteLine("\n** Download timeout({0} sec).. breaking. **\n", _timeout);
+                        break;
+                    }
+
                     DownloadSingleWallpaper();
+
+                    _timeoutTimer.Reset();
+                    _timeoutTimer.Start();
+                }
             }
             catch (Exception ex)
             {
