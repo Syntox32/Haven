@@ -30,6 +30,9 @@ namespace Haven.Core
         [YamlMember(Alias = "pages")]
         public int Pages { get; set; }
 
+        [YamlMember(Alias = "threads")]
+        public int Threads { get; set; }
+
         [YamlMember(Alias = "page_offset")]
         public int PageOffset { get; set; }
 

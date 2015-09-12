@@ -21,7 +21,6 @@ namespace Haven.Core
         private bool _downloading;
         private bool _requireLogin;
         private bool _checkWallpaperBounds;
-        private int _clientUpperBound;
         private double _timeout;
 
         private List<Wallpaper> _wallpapers;
@@ -32,6 +31,7 @@ namespace Haven.Core
 
         public int Pages { get; private set; }
         public int PageOffset { get; private set; }
+        public int Threads { get; private set; }
         public int Errors { get; private set; }
         public string URL { get; private set; }
         public double DownloadTime { get; private set; }
@@ -68,17 +68,6 @@ namespace Haven.Core
             _requireLogin = false;
 
             _timeout = 10.0; // seconds;
-            _clientUpperBound = 4;
-            _clientQueue = new BlockingCollection<WebClient>(_clientUpperBound);
-
-            for(int i = 0; i < _clientUpperBound; i++)
-            {
-                var client = new WebClient();
-                client.Proxy = null;
-
-                client.DownloadFileCompleted += DownloadFileCompleted;
-                _clientQueue.Add(client);
-            }
         }
 
         public Wallhaven(string url, int pages, string username, string password, bool login)
@@ -107,6 +96,9 @@ namespace Haven.Core
             Username = settings.Username;
             Password = settings.Password;
 
+            // 4 threads is default
+            Threads = settings.Threads == 0 ? 4 : settings.Threads;
+
             _requireLogin = settings.UseAuth;
             _checkWallpaperBounds = settings.UseMin;
 
@@ -123,6 +115,18 @@ namespace Haven.Core
         public void StartDownload()
         {
             Console.WriteLine("Started up..");
+            Console.WriteLine("# Threads: {0}", Threads);
+
+            _clientQueue = new BlockingCollection<WebClient>(Threads);
+
+            for (int i = 0; i < Threads; i++)
+            {
+                var client = new WebClient();
+                client.Proxy = null;
+
+                client.DownloadFileCompleted += DownloadFileCompleted;
+                _clientQueue.Add(client);
+            }
 
             if (!Directory.Exists(Savepath))
             {
