@@ -18,7 +18,7 @@ Download
 
 For now only binaries for the CLI version is available.
 
-[You cant get it here, under releases](https://github.com/Syntox32/Haven/releases)
+[You can get it here, under releases](https://github.com/Syntox32/Haven/releases)
 
 Usage
 -----
